@@ -10,8 +10,10 @@ const bookingsRoutes = require('./routes/bookings');
 const app = express();
 
 // Security and CORS configuration
+// In production set FRONTEND_URL=https://your-app.vercel.app in Render env vars
+const allowedOrigin = process.env.FRONTEND_URL || true;
 app.use(cors({
-  origin: true, // Allow frontend during development and production
+  origin: allowedOrigin,
   credentials: true
 }));
 
