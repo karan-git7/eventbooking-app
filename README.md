@@ -1,170 +1,152 @@
 # EventBook
 
-A full-stack event booking platform. Admin publishes events, users browse and book seats, concurrency is handled safely.
+A mini full-stack event booking platform built for the internship assessment.
 
 ---
 
-## Live Links & Test Accounts
+## 1. Live Links & Test Accounts
 
-- **Frontend**: (to be added after deployment)
-- **Backend API**: (to be added after deployment)
+- **Frontend**: [https://eventbooking-app-nine.vercel.app](https://eventbooking-app-nine.vercel.app)
+- **Backend API**: [https://eventbooking-app.onrender.com](https://eventbooking-app.onrender.com)
 
 | Role | Email | Password |
-| --- | --- | --- |
-| Admin | admin@gmail.com | admin@123 |
-| User | karan@gmail.com | karan@123 |
+|---|---|---|
+| **Admin** | `admin@gmail.com` | `admin@123` |
+| **User** | `karan@gmail.com` | `karan@123` |
 
-The admin account is created only via seed script — it cannot be made through the registration form.
-
----
-
-## Tech Stack
-
-- **Frontend**: Next.js 16 (App Router) + TypeScript + Tailwind CSS
-- **Backend**: Node.js + Express REST API
-- **Database**: Supabase (PostgreSQL) via `pg` connection pool
-- **Auth**: JWT (7-day expiry), bcrypt password hashing
-- **Tests**: Jest + Supertest
-
-Frontend and backend are fully separate. Next.js only renders the UI — it has no database access. All data flows through the Express API.
+> *Note: Render free tier spins down after inactivity. The first API request may take ~30 seconds to wake up.*
 
 ---
 
-## Run Locally
+## 2. Tech Stack & Why Chosen
 
-**Prerequisites**: Node.js 18+, a Supabase project with the connection string.
+- **Frontend**: Next.js 16 (App Router), TypeScript, Tailwind CSS
+  - Clean component-based UI, fast page loads, responsive design across mobile and desktop.
+- **Backend**: Node.js, Express.js
+  - Lightweight, decoupled REST API following standard MVC structure.
+- **Database**: PostgreSQL (hosted on Supabase)
+  - Enforces relational constraints, ACID transactions, and row-level locking for concurrency.
+- **Testing**: Jest + Supertest
+  - Automated integration testing of core business and booking rules.
 
-**1. Clone and install**
+---
+
+## 3. Run Locally
+
+### Prerequisites
+- Node.js 18+
+- Supabase / PostgreSQL instance
+
+### Setup
 ```bash
-git clone <repo-url>
-cd eventbooking_app
-npm install          # installs concurrently at root
+git clone https://github.com/karan-git7/eventbooking-app.git
+cd eventbooking-app
+
+# Install all dependencies
+npm install
 cd backend && npm install
 cd ../frontend && npm install
 ```
 
-**2. Set environment variables**
+### Environment Variables
 
-Copy `backend/.env.example` to `backend/.env` and fill in:
-```
-DATABASE_URL=postgresql://...   # your Supabase connection string
-JWT_SECRET=any_long_random_string
+**`backend/.env`**:
+```env
 PORT=5000
+DATABASE_URL=your_supabase_postgres_uri
+JWT_SECRET=your_jwt_secret
+FRONTEND_URL=http://localhost:3000
 ```
 
-Copy `frontend/.env.example` to `frontend/.env.local` and fill in:
-```
+**`frontend/.env.local`**:
+```env
 NEXT_PUBLIC_API_URL=http://localhost:5000/api
 ```
 
-**3. Run database migration and seed**
+### Database Migration & Seed
 ```bash
 cd backend
-npm run migrate    # creates tables, indexes, constraints
-npm run seed       # seeds admin, users, and 8 Nepali events
+npm run migrate   # Creates tables, constraints, and partial index
+npm run seed      # Seeds admin, users, and authentic events
 ```
 
-**4. Start both servers**
+### Start Application
 ```bash
-# from project root
-npm run dev        # starts backend on :5000 and frontend on :3000
+# From project root
+npm run dev       # Starts backend (:5000) and frontend (:3000)
 ```
 
-**5. Run tests**
+### Run Tests
 ```bash
 cd backend
-npm test           # runs 6 backend integration tests
+npm test          # Runs 6 automated backend tests
 ```
 
 ---
 
-## Data Model
+## 4. Data Model
 
-Three tables:
+- **`users`**: `id` (UUID, PK), `name`, `email` (Unique), `password_hash`, `role` (`user` | `admin`), `created_at`
+- **`events`**: `id` (UUID, PK), `title`, `description`, `category`, `date_time`, `venue`, `total_seats` (> 0), `created_by` (FK → users), `created_at`, `updated_at`
+- **`booking`**: `id` (UUID, PK), `event_id` (FK → events), `user_id` (FK → users), `status` (`CONFIRMED` | `CANCELLED`), `created_at`, `updated_at`
 
-**users** — id (UUID), name, email (unique), password_hash, role (user | admin), created_at
-
-**events** — id (UUID), title, description, category, date_time, venue, total_seats (>0), created_by (FK → users), created_at, updated_at
-
-**booking** — id (UUID), event_id (FK → events), user_id (FK → users), status (CONFIRMED | CANCELLED), created_at, updated_at
-
-**Partial unique index**:
+### Key Constraint
 ```sql
 CREATE UNIQUE INDEX idx_unique_active_booking
 ON booking (event_id, user_id)
 WHERE status = 'CONFIRMED';
 ```
-This prevents duplicate active bookings at the database level. A cancelled booking does not block re-booking.
+Enforces at the database level that a user cannot hold two active seats for the same event, while still allowing re-booking if previously cancelled.
 
 ---
 
-## API Endpoints
+## 5. API Endpoints
 
 ### Auth
-| Method | Route | Auth | Description |
-| --- | --- | --- | --- |
-| POST | /api/auth/register | Public | Create account. Role is always forced to 'user'. |
-| POST | /api/auth/login | Public | Login with rate limiting (15 req/15 min). Returns JWT. |
-| GET | /api/auth/me | JWT | Get current user profile. |
+- `POST /api/auth/register` — Public. Creates account (`role` is hardcoded to `'user'`).
+- `POST /api/auth/login` — Public. Rate limited (15 req/15 min). Returns JWT token.
+- `GET /api/auth/me` — Authenticated. Returns current user profile.
 
 ### Events
-| Method | Route | Auth | Description |
-| --- | --- | --- | --- |
-| GET | /api/events | Public | Paginated list. Query params: search, filter (upcoming/past/all), page, limit. Returns seats_left. |
-| GET | /api/events/:id | Public | Single event with seats_left and user's booking status. |
-| POST | /api/events | Admin | Create event. Validates future date, seats > 0. |
-| PUT | /api/events/:id | Admin | Update event. Cannot reduce seats below confirmed booking count. |
-| DELETE | /api/events/:id | Admin | Delete event. Pass ?force=true to also cancel active bookings. |
-| GET | /api/events/:id/attendees | Admin | List confirmed attendees for an event. |
+- `GET /api/events` — Public. Server pagination (`page`, `limit`), search query (`search`), filter (`upcoming`, `past`, `all`). Computes real-time `seats_left`.
+- `GET /api/events/:id` — Public. Full event details + user booking status.
+- `POST /api/events` — Admin only. Creates an event (future date and positive seat count required).
+- `PUT /api/events/:id` — Admin only. Edits event (rejects decreasing seats below active bookings).
+- `DELETE /api/events/:id` — Admin only. Soft/hard delete protection (`?force=true` to cancel active bookings).
+- `GET /api/events/:id/attendees` — Admin only. Lists confirmed attendees with names and emails.
 
 ### Bookings
-| Method | Route | Auth | Description |
-| --- | --- | --- | --- |
-| POST | /api/events/:id/book | JWT | Book a seat. Uses SELECT FOR UPDATE to prevent overbooking. |
-| GET | /api/bookings/my | JWT | Get current user's bookings. |
-| POST | /api/bookings/:id/cancel | JWT | Cancel own booking. Rejected for past events. |
+- `POST /api/events/:id/book` — Authenticated. Books 1 seat using row locking.
+- `GET /api/bookings/my` — Authenticated. Lists logged-in user's bookings.
+- `POST /api/bookings/:id/cancel` — Authenticated. Cancels booking and frees up seat (blocked if event has passed).
 
-All errors return JSON `{ "error": "..." }`. Stack traces are never sent to the client.
+*Errors consistently return `{ "error": "message" }` with standard HTTP status codes (400, 401, 403, 404, 409, 500).*
 
 ---
 
-## Decisions & Trade-offs
+## 6. Key Decisions & Trade-offs
 
-**Seat calculation**: `seats_left` is computed dynamically via a COUNT of confirmed bookings on each query, not stored as a column. This avoids cache/counter drift bugs but adds a small query cost — fine for this scale.
-
-**Overbooking prevention**: Inside a transaction, the booking route does `SELECT ... FOR UPDATE` on the event row. Concurrent requests queue up behind the lock, so only one proceeds at a time. This is serialized at the database level.
-
-**Cancellation edge case**: Cancelling a past event booking is blocked on the backend (checked by comparing event date_time to NOW()). The frontend also hides the cancel button for past events.
-
-**Admin seat reduction**: If an admin tries to reduce total_seats below the number of already confirmed bookings, the API rejects it with a clear error message. This is Rule 5.
-
-**Event deletion with bookings**: Deleting an event that has active bookings requires `?force=true`. This cancels all attendee bookings before deleting the event. Without force=true, deletion is rejected — prevents accidental data loss.
-
-**Admin role security**: The register endpoint hardcodes `role = 'user'` regardless of what the client sends. Admin accounts can only be created via the seed script.
+1. **Concurrency & Overbooking Prevention**: Handled inside a database transaction with `SELECT ... FOR UPDATE` on the event row. Requests are serialized, preventing race conditions when the last seat is being booked.
+2. **Real-time Seat Count**: `seats_left` is computed via `COUNT(*)` of active bookings rather than a mutable counter column to prevent counter drift.
+3. **Edge Case Handling**:
+   - Past events cannot be booked or cancelled.
+   - Admin cannot reduce total seats below already confirmed bookings.
+   - Admin account can only be created via seed script — registration route strictly forces `role = 'user'`.
 
 ---
 
-## AI Usage
+## 7. AI Usage
 
-Used Gemini (via Antigravity IDE) as a coding assistant throughout the project.
-
-What I used it for:
-- Generating initial boilerplate (table schema, Express route structure)
-- Drafting test assertions for the Jest suite
-- Fixing TypeScript type errors
-
-What I wrote / verified myself:
-- The `SELECT ... FOR UPDATE` concurrency logic and why it works
-- The partial unique index design and what it enforces
-- The seat calculation approach (dynamic COUNT vs stored counter)
-- All business rule validations (Rules 1–6)
-- The overall architecture decision to keep Next.js as a pure UI layer
+- Used an AI coding assistant for:
+  - Scaffolding initial boilerplate (Express route skeletons, Tailwind layouts).
+  - Generating initial mock event data for the seed script.
+  - Quick syntax assistance and TypeScript typing.
+- All core architecture decisions, concurrency locks (`SELECT ... FOR UPDATE`), partial indexes, business rule validations, and edge cases were reviewed, verified, and tested manually.
 
 ---
 
-## Known Issues / Next Steps
+## 8. Known Issues & Next Steps
 
-- CORS is currently set to `origin: true` (allow all). Before production, restrict it to the deployed frontend URL.
-- No email notifications on booking confirmation or cancellation.
-- No admin dashboard analytics (total bookings, revenue, etc.).
-- Password reset flow not implemented.
+- **Cold Starts**: Render free tier sleeps after 15 minutes of inactivity; the initial request takes ~30s.
+- **Email Notifications**: Currently no confirmation emails sent upon booking or cancellation.
+- **Payment Gateway**: All bookings are free reservation seats; paid ticketing integration would be a next step.
