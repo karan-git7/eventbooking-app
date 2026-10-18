@@ -11,7 +11,9 @@ const app = express();
 
 // Security and CORS configuration
 // In production set FRONTEND_URL=https://your-app.vercel.app in Render env vars
-const allowedOrigin = process.env.FRONTEND_URL || true;
+// Strip trailing slash defensively — browsers send origin without trailing slash
+const rawOrigin = process.env.FRONTEND_URL;
+const allowedOrigin = rawOrigin ? rawOrigin.replace(/\/+$/, '') : true;
 app.use(cors({
   origin: allowedOrigin,
   credentials: true

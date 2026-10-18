@@ -8,7 +8,8 @@ import {
   User
 } from './types';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+// Strip trailing slash so NEXT_PUBLIC_API_URL works with or without one
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace(/\/+$/, '');
 
 /**
  * Standard request helper with automatic JSON parsing and bearer token attachment
