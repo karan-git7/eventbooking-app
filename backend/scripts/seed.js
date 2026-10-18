@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const seed = async () => {
   const client = await pool.connect();
   try {
-    console.log('--- Starting Database Seeding ---');
+    console.log('--- Starting Database Seeding with Nepali Events ---');
     await client.query('BEGIN');
 
     // Clean existing data for clean reproducible state
@@ -34,13 +34,13 @@ const seed = async () => {
       INSERT INTO users (name, email, password_hash, role)
       VALUES ($1, $2, $3, $4)
       RETURNING id, name, email, role;
-    `, ['Jane Smith', 'jane@gmail.com', userPasswordHash, 'user']);
+    `, ['Aayush Shrestha', 'aayush@gmail.com', userPasswordHash, 'user']);
 
     const user3Res = await client.query(`
       INSERT INTO users (name, email, password_hash, role)
       VALUES ($1, $2, $3, $4)
       RETURNING id, name, email, role;
-    `, ['Bob Lee', 'bob@gmail.com', userPasswordHash, 'user']);
+    `, ['Pooja Sharma', 'pooja@gmail.com', userPasswordHash, 'user']);
 
     const adminId = adminRes.rows[0].id;
     const user1Id = user1Res.rows[0].id;
@@ -55,114 +55,122 @@ const seed = async () => {
     const inDays = (d) => new Date(now.getTime() + d * 24 * 60 * 60 * 1000).toISOString();
     const agoDays = (d) => new Date(now.getTime() - d * 24 * 60 * 60 * 1000).toISOString();
 
-    // 2. Create Events with realistic, clean product descriptions
+    // 2. Create Authentic Nepali Events
+    // Event 1: Kathmandu React & Next.js Meetup
     const e1 = await client.query(`
       INSERT INTO events (title, description, category, date_time, venue, total_seats, created_by)
       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;
     `, [
-      'Next.js & React Full-Stack Workshop',
-      'Learn how to architect high-performance web applications using modern React patterns, server-side data fetching, and edge infrastructure.',
+      'Kathmandu Next.js & React Developer Meetup',
+      'Join Kathmandu’s vibrant frontend community for talks on React Server Components, Next.js App Router performance, and production architecture.',
       'Workshop',
-      inDays(5),
-      'Civic Tech Center, Hall B, San Francisco',
-      50,
-      adminId
-    ]);
-
-    const e2 = await client.query(`
-      INSERT INTO events (title, description, category, date_time, venue, total_seats, created_by)
-      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;
-    `, [
-      'Global Software Engineering Summit',
-      'Join software engineers, technical leads, and founders for an inspiring day discussing scalable distributed systems, database reliability, and cloud design.',
-      'Conference',
-      inDays(12),
-      'Grand Union Convention Hall, New York',
-      25,
-      adminId
-    ]);
-
-    const e3 = await client.query(`
-      INSERT INTO events (title, description, category, date_time, venue, total_seats, created_by)
-      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;
-    `, [
-      'Acoustic Rooftop Session',
-      'An intimate evening of live indie acoustic performances and artist conversations under the city skyline.',
-      'Concert',
-      inDays(3),
-      'The Sky Lounge Terrace, Austin',
-      3,
-      adminId
-    ]);
-
-    const e4 = await client.query(`
-      INSERT INTO events (title, description, category, date_time, venue, total_seats, created_by)
-      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;
-    `, [
-      'Docker & Containerization Masterclass',
-      'Hands-on lab mastering container building, multi-stage images, networking, and production container security.',
-      'Workshop',
-      inDays(8),
-      'Innovation Hub Lab 2, Seattle',
-      2,
-      adminId
-    ]);
-
-    const e5 = await client.query(`
-      INSERT INTO events (title, description, category, date_time, venue, total_seats, created_by)
-      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;
-    `, [
-      'Autumn Tech & Product Retrospective',
-      'Our past season symposium covering engineering retrospectives, team retros, and architectural lessons from production incidents.',
-      'Conference',
-      agoDays(14),
-      'Downtown Exhibition Center, Boston',
-      100,
-      adminId
-    ]);
-
-    const e6 = await client.query(`
-      INSERT INTO events (title, description, category, date_time, venue, total_seats, created_by)
-      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;
-    `, [
-      'Modern UI/UX Design System Meetup',
-      'Explore the principles of crafting accessible, modular design systems that bridge the gap between Figma components and clean production code.',
-      'Meetup',
-      inDays(18),
-      'Artisan Loft Studio, Brooklyn',
-      30,
-      adminId
-    ]);
-
-    const e7 = await client.query(`
-      INSERT INTO events (title, description, category, date_time, venue, total_seats, created_by)
-      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;
-    `, [
-      'Cloud Security & Identity Forum',
-      'Practical security strategies for modern web APIs, token handling, threat modeling, and defending against common web vulnerabilities.',
-      'Conference',
-      inDays(25),
-      'Metro Tech Pavilion, Chicago',
+      inDays(4),
+      'Moksh Live Hall, Jhamsikhel, Lalitpur',
       45,
       adminId
     ]);
 
+    // Event 2: Nepal Tech Summit 2026
+    const e2 = await client.query(`
+      INSERT INTO events (title, description, category, date_time, venue, total_seats, created_by)
+      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;
+    `, [
+      'Nepal Developers & Tech Summit 2026',
+      'Nepal’s flagship software engineering conference featuring engineering leaders discussing cloud architecture, PostgreSQL scalability, and IT exports.',
+      'Conference',
+      inDays(10),
+      'Rastriya Sabha Griha (City Hall), Bhrikutimandap, Kathmandu',
+      30,
+      adminId
+    ]);
+
+    // Event 3: Pokhara Lakeside Acoustic Session (Nearly full: 3 total, 2 booked -> 1 seat left)
+    const e3 = await client.query(`
+      INSERT INTO events (title, description, category, date_time, venue, total_seats, created_by)
+      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;
+    `, [
+      'Pokhara Indie Acoustic Live Session',
+      'An intimate candlelit acoustic live performance featuring popular Nepali indie singer-songwriters by Phewa Lake.',
+      'Concert',
+      inDays(3),
+      'Busy Bee Cafe Terrace, Lakeside, Pokhara',
+      3,
+      adminId
+    ]);
+
+    // Event 4: Docker & Kubernetes Hands-on Lab (Sold out: 2 total, 2 booked -> 0 seats left)
+    const e4 = await client.query(`
+      INSERT INTO events (title, description, category, date_time, venue, total_seats, created_by)
+      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;
+    `, [
+      'Kathmandu DevOps & Kubernetes Bootcamp',
+      'Intensive hands-on lab on container deployments, automated CI/CD pipelines, and high-availability servers. Limited capacity.',
+      'Workshop',
+      inDays(7),
+      'Deerwalk Complex Tech Lab, Sifal, Kathmandu',
+      2,
+      adminId
+    ]);
+
+    // Event 5: Past Event (Cannot be booked or cancelled)
+    const e5 = await client.query(`
+      INSERT INTO events (title, description, category, date_time, venue, total_seats, created_by)
+      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;
+    `, [
+      'Nepal Cyber Security Symposium 2025',
+      'Archive of our annual cybersecurity forum covering national digital infrastructure, ethical hacking, and web app defense.',
+      'Conference',
+      agoDays(15),
+      'Nepal Academy Hall (Pragya Bhavan), Kamaladi, Kathmandu',
+      80,
+      adminId
+    ]);
+
+    // Event 6: Kupondole UI/UX Design Circle
+    const e6 = await client.query(`
+      INSERT INTO events (title, description, category, date_time, venue, total_seats, created_by)
+      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;
+    `, [
+      'Lalitpur Design System & UI/UX Gathering',
+      'Designers and product engineers sharing practical insights into Figma tokens, accessible design, and responsive typography.',
+      'Meetup',
+      inDays(14),
+      'The Yellow Durbar Hall, Kupondole, Lalitpur',
+      25,
+      adminId
+    ]);
+
+    // Event 7: Chitwan Tech & AI Innovators Forum
+    const e7 = await client.query(`
+      INSERT INTO events (title, description, category, date_time, venue, total_seats, created_by)
+      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;
+    `, [
+      'Chitwan Tech & AI Innovators Forum',
+      'Bringing together students, freelancers, and software engineers from Chitwan to explore applied AI and web technology.',
+      'Conference',
+      inDays(20),
+      'Bharatpur Garden Resort Convention Hall, Chitwan',
+      40,
+      adminId
+    ]);
+
+    // Event 8: Kathmandu Founders & Builders Breakfast
     const e8 = await client.query(`
       INSERT INTO events (title, description, category, date_time, venue, total_seats, created_by)
       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;
     `, [
-      'Tech Founders & Creators Breakfast',
-      'Casual morning gathering for developers, product designers, and early-stage entrepreneurs to share ideas and exchange feedback.',
+      'Kathmandu Tech Founders & Freelancers Coffee Meet',
+      'Casual morning coffee discussion for tech startup founders, open-source contributors, and independent developers.',
       'Meetup',
-      inDays(30),
-      'The Roasted Bean Coffeehouse, Denver',
-      15,
+      inDays(26),
+      'Himalayan Java Coffee, Mandikhatar, Kathmandu',
+      12,
       adminId
     ]);
 
-    console.log('✓ Seeded 8 realistic events');
+    console.log('✓ Seeded 8 authentic Nepali events');
 
-    // 3. Seed Bookings for edge rules:
+    // 3. Seed Bookings for rules validation
     // E3: 2 booked / 3 total -> 1 seat left
     await client.query(`
       INSERT INTO booking (event_id, user_id, status)

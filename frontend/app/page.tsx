@@ -11,6 +11,7 @@ import { AuthModal } from '../components/AuthModal';
 import { MyBookingsModal } from '../components/MyBookingsModal';
 import { AdminModal } from '../components/AdminModal';
 import { ReviewerGuideModal } from '../components/ReviewerGuideModal';
+import { ConfirmBookingModal } from '../components/ConfirmBookingModal';
 import {
   Search,
   Calendar,
@@ -57,12 +58,23 @@ export default function Home() {
   const [myBookingsOpen, setMyBookingsOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
 
-  // Reviewer Guide Popup (shows on every refresh, can be dismissed by clicking anywhere)
+  // Reviewer Guide Popup (appears on refresh, dismissed on outside click)
   const [reviewerModalOpen, setReviewerModalOpen] = useState(true);
 
-  // Action toast
-  const [bookingLoadingId, setBookingLoadingId] = useState<string | null>(null);
+  // Booking Confirmation Modal
+  const [eventToBook, setEventToBook] = useState<EventItem | null>(null);
+  const [confirmBookingOpen, setConfirmBookingOpen] = useState(false);
+  const [bookingLoading, setBookingLoading] = useState(false);
+
+  // Top-Right Floating Toast Notification (2.5 seconds auto-dismiss)
   const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const showToast = useCallback((type: 'success' | 'error', text: string) => {
+    setToastMessage({ type, text });
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 2500);
+  }, []);
 
   // Debounce search input
   useEffect(() => {
@@ -121,31 +133,42 @@ export default function Home() {
     fetchEvents();
   }, [fetchEvents]);
 
-  // Handle Booking
-  const handleBook = async (event: EventItem) => {
+  // Trigger Booking Confirmation Popup
+  const handleInitiateBook = (event: EventItem) => {
     if (!user) {
       setAuthInitialTab('login');
       setAuthModalOpen(true);
       return;
     }
+    setEventToBook(event);
+    setConfirmBookingOpen(true);
+  };
 
-    setBookingLoadingId(event.id);
+  // Perform Confirmed Booking
+  const handleConfirmBooking = async () => {
+    if (!eventToBook) return;
+    setBookingLoading(true);
+
     try {
-      const res = await api.bookings.book(event.id);
-      showToast('success', res.message || 'Seat reserved successfully.');
+      const res = await api.bookings.book(eventToBook.id);
+      showToast('success', res.message || 'Seat reserved successfully!');
+      setConfirmBookingOpen(false);
+      setEventToBook(null);
+
+      // Refresh data
       await Promise.all([fetchEvents(), loadUserBookings()]);
-      if (selectedEvent && selectedEvent.id === event.id) {
+
+      if (selectedEvent && selectedEvent.id === eventToBook.id) {
         setSelectedUserBooking(res.booking);
       }
     } catch (err: any) {
       showToast('error', err.message || 'Failed to book seat.');
-      throw err;
     } finally {
-      setBookingLoadingId(null);
+      setBookingLoading(false);
     }
   };
 
-  // Handle Cancel Booking
+  // Handle Cancel Booking from detail modal
   const handleCancelBooking = async (bookingId: string) => {
     try {
       const res = await api.bookings.cancel(bookingId);
@@ -173,33 +196,16 @@ export default function Home() {
     }
   };
 
-  const showToast = (type: 'success' | 'error', text: string) => {
-    setToastMessage({ type, text });
-    setTimeout(() => {
-      setToastMessage(null);
-    }, 4000);
-  };
-
   return (
     <div className="min-h-screen flex flex-col bg-[#0b0f17] text-slate-100">
-      {/* Navigation */}
-      <Navbar
-        onOpenAuth={(tab = 'login') => {
-          setAuthInitialTab(tab);
-          setAuthModalOpen(true);
-        }}
-        onOpenMyBookings={() => setMyBookingsOpen(true)}
-        onOpenAdmin={() => setAdminOpen(true)}
-      />
-
-      {/* Floating Toast Notification */}
+      {/* Top-Right Floating Toast Notification (Auto-disappears in 2.5s) */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed top-5 right-5 z-[9999] animate-in slide-in-from-top-4 duration-200">
           <div
-            className={`px-4 py-2.5 rounded-xl shadow-xl border flex items-center gap-2.5 text-xs font-medium ${
+            className={`px-4 py-3 rounded-xl shadow-2xl border flex items-center gap-2.5 text-xs font-semibold backdrop-blur-md ${
               toastMessage.type === 'success'
-                ? 'bg-emerald-950/90 border-emerald-500/40 text-emerald-200'
-                : 'bg-rose-950/90 border-rose-500/40 text-rose-200'
+                ? 'bg-[#0f241d] border-emerald-500/50 text-emerald-200 shadow-emerald-950/40'
+                : 'bg-[#291114] border-rose-500/50 text-rose-200 shadow-rose-950/40'
             }`}
           >
             {toastMessage.type === 'success' ? (
@@ -212,14 +218,24 @@ export default function Home() {
         </div>
       )}
 
+      {/* Navigation */}
+      <Navbar
+        onOpenAuth={(tab = 'login') => {
+          setAuthInitialTab(tab);
+          setAuthModalOpen(true);
+        }}
+        onOpenMyBookings={() => setMyBookingsOpen(true)}
+        onOpenAdmin={() => setAdminOpen(true)}
+      />
+
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {/* Simple & Clean Product Hero Section */}
         <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-3">
-            Discover & Book Tech Events
+            Discover & Book Events in Nepal
           </h1>
           <p className="text-sm text-slate-400 leading-relaxed">
-            Browse upcoming workshops, conferences, and meetups. Reserve your seat instantly with live capacity updates.
+            Browse upcoming workshops, conferences, and meetups in Kathmandu, Pokhara, and across Nepal. Reserve your seat with live availability.
           </p>
         </div>
 
@@ -330,8 +346,8 @@ export default function Home() {
                 key={ev.id}
                 event={ev}
                 isBookedByMe={!!myBookedEvents[ev.id]}
-                bookingLoading={bookingLoadingId === ev.id}
-                onBook={handleBook}
+                bookingLoading={bookingLoading && eventToBook?.id === ev.id}
+                onBook={handleInitiateBook}
                 onViewDetails={handleViewDetails}
               />
             ))}
@@ -383,12 +399,12 @@ export default function Home() {
         )}
       </main>
 
-      {/* Production-Grade Footer */}
+      {/* Production Footer */}
       <footer className="border-t border-slate-800 py-8 bg-[#0b0f17] text-xs text-slate-500 mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Ticket className="w-4 h-4 text-indigo-400" />
-            <span className="font-semibold text-slate-300">EventBook</span>
+            <span className="font-semibold text-slate-300">EventBook Nepal</span>
             <span>— Discover, book, and attend memorable events.</span>
           </div>
           <div className="flex items-center gap-5 text-slate-400">
@@ -403,10 +419,22 @@ export default function Home() {
         </div>
       </footer>
 
-      {/* Reviewer / Demo Accounts Popup (Appears on refresh, dismissed by clicking outside) */}
+      {/* Reviewer / Test Accounts Popup */}
       <ReviewerGuideModal
         isOpen={reviewerModalOpen}
         onClose={() => setReviewerModalOpen(false)}
+      />
+
+      {/* Booking Confirmation Dialog ("Are you sure you want to book?") */}
+      <ConfirmBookingModal
+        isOpen={confirmBookingOpen}
+        event={eventToBook}
+        loading={bookingLoading}
+        onConfirm={handleConfirmBooking}
+        onCancel={() => {
+          setConfirmBookingOpen(false);
+          setEventToBook(null);
+        }}
       />
 
       {/* Modals */}
@@ -421,7 +449,10 @@ export default function Home() {
         event={selectedEvent}
         userBooking={selectedUserBooking}
         onClose={() => setDetailModalOpen(false)}
-        onBook={handleBook}
+        onBook={async (ev) => {
+          setDetailModalOpen(false);
+          handleInitiateBook(ev);
+        }}
         onCancelBooking={handleCancelBooking}
         onRequireAuth={() => {
           setDetailModalOpen(false);
@@ -446,6 +477,7 @@ export default function Home() {
           fetchEvents();
           loadUserBookings();
         }}
+        onShowToast={showToast}
       />
     </div>
   );

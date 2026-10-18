@@ -1,7 +1,7 @@
 # EventBook - Task Execution Log
 
 ## Project Overview
-- **Project**: EventBook (Mini Event Booking Full Stack App)
+- **Project**: EventBook Nepal (Mini Event Booking Full Stack App)
 - **Frontend**: Next.js 16 + TypeScript + Tailwind CSS
 - **Backend**: Node.js + Express (REST API)
 - **Database**: Supabase (PostgreSQL with `pg` connection pool)
@@ -24,8 +24,8 @@
 - [x] Build Seed script (`backend/scripts/seed.js`):
   - Admin user (`admin@gmail.com` / `admin@123`)
   - User (`karan@gmail.com` / `karan@123` - Karan Gupta)
-  - Secondary users (`jane@gmail.com`, `bob@gmail.com`)
-  - 8 realistic events (workshops, conferences, concerts, past event, sold-out event)
+  - Secondary users (`aayush@gmail.com`, `pooja@gmail.com`)
+  - 8 authentic Nepali events (Kathmandu Next.js Meetup, Nepal Tech Summit, Pokhara Acoustic Live, Deerwalk DevOps Bootcamp, etc.)
 
 ### Phase 2: REST API Implementation with Business Rules
 - [x] JWT Authentication & Authorization Middleware (`backend/middleware/auth.js`)
@@ -51,9 +51,10 @@
 
 ### Phase 4: Frontend Refinement & User Experience
 - [x] Removed Next.js Turbopack `agentFeedback` and `devIndicators` (removes bottom-left N icon)
-- [x] Removed assignment jargon from Hero section (clean "Discover & Book Tech Events" heading)
-- [x] Removed assignment banner from top of page
-- [x] Removed demo buttons from navigation bar
+- [x] Converted all events and venues to regional Nepali events (Kathmandu, Pokhara, Lalitpur, Chitwan)
+- [x] Added `ConfirmBookingModal` ("Are you sure you want to reserve a seat?") preventing accidental single-click bookings
+- [x] Added custom delete confirmation dialog in Admin panel
+- [x] Created top-right floating toast notifications auto-dismissing after 2.5 seconds
 - [x] Added `ReviewerGuideModal` that appears on refresh and dismisses on outside click
 - [x] Clean, realistic production footer with product links
 - [x] Simplified CSS design system in `globals.css`
