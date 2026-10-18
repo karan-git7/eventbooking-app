@@ -59,6 +59,8 @@
 - [x] Clean, realistic production footer with product links
 - [x] Simplified CSS design system in `globals.css`
 - [x] Verified via browser subagent: clean UI, popup dismissal, and working flow
+- [x] **Mobile Navbar fix**: Added colored avatar with user initial (always visible on all screen sizes), name+role shown on sm+ breakpoint
+- [x] **MyBookingsModal**: Replaced native `confirm()` and `alert()` browser dialogs with custom styled in-app confirmation modal (consistent with admin delete UX)
 
 ### Phase 5: Self-Test Checklist & Documentation
 - [x] Self-test checklist added to `README.md`
@@ -70,6 +72,8 @@
 ## Current Status
 - **All Core Requirements**: COMPLETED & VERIFIED
 - **All 6 Backend Rules**: IMPLEMENTED & TESTED (100% PASS RATE)
+- **Admin Security**: Only via `backend/scripts/seed.js` — register route hardcodes role='user'
 - **UI Design**: Clean, modern, production-grade
 - **Reviewer Popup**: Functional & dismissible on outside click
+- **Mobile UX**: User avatar (initial) always visible; no browser native dialogs anywhere
 - **Ready for Deployment**: Vercel (frontend) + Render/Railway (backend) + Supabase (database)

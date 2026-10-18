@@ -29,10 +29,10 @@ describe('EventBook - Business Rules & Integrity Tests', () => {
     user1Token = user1Login.body.token;
     user1Id = user1Login.body.user.id;
 
-    // Login as seeded User 2 (Jane)
+    // Login as seeded User 2 (Aayush)
     const user2Login = await request(app)
       .post('/api/auth/login')
-      .send({ email: 'jane@gmail.com', password: 'karan@123' });
+      .send({ email: 'aayush@gmail.com', password: 'karan@123' });
     expect(user2Login.status).toBe(200);
     user2Token = user2Login.body.token;
     user2Id = user2Login.body.user.id;

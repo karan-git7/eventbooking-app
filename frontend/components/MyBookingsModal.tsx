@@ -13,6 +13,7 @@ import {
   AlertCircle,
   Clock,
   Loader2,
+  AlertTriangle,
 } from 'lucide-react';
 
 interface MyBookingsModalProps {
@@ -31,6 +32,9 @@ export const MyBookingsModal: React.FC<MyBookingsModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'confirmed' | 'cancelled'>('all');
+
+  // Custom cancel confirmation dialog state
+  const [bookingToCancel, setBookingToCancel] = useState<BookingItem | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -51,21 +55,20 @@ export const MyBookingsModal: React.FC<MyBookingsModalProps> = ({
     }
   };
 
-  const handleCancel = async (booking: BookingItem) => {
-    if (booking.is_past_event) {
-      alert('Cannot cancel bookings for past events.');
-      return;
-    }
+  // Open the confirmation dialog
+  const promptCancel = (booking: BookingItem) => {
+    setBookingToCancel(booking);
+  };
 
-    if (!confirm(`Cancel your seat for "${booking.event_title}"? This will free the seat for other attendees.`)) {
-      return;
-    }
-
+  // Execute cancellation after confirmation
+  const confirmCancel = async () => {
+    if (!bookingToCancel) return;
+    const booking = bookingToCancel;
+    setBookingToCancel(null);
     setCancellingId(booking.booking_id);
     setError(null);
     try {
       await api.bookings.cancel(booking.booking_id);
-      // Update local state
       setBookings((prev) =>
         prev.map((b) =>
           b.booking_id === booking.booking_id ? { ...b, status: 'CANCELLED' } : b
@@ -225,7 +228,7 @@ export const MyBookingsModal: React.FC<MyBookingsModalProps> = ({
                     <div className="flex items-center gap-2 sm:self-center shrink-0">
                       {isConfirmed && !isPast && (
                         <button
-                          onClick={() => handleCancel(b)}
+                          onClick={() => promptCancel(b)}
                           disabled={cancellingId === b.booking_id}
                           className="py-1.5 px-3 rounded-xl text-xs font-medium text-rose-400 hover:text-rose-200 bg-rose-950/30 hover:bg-rose-900/40 border border-rose-500/20 transition disabled:opacity-50"
                         >
@@ -243,6 +246,37 @@ export const MyBookingsModal: React.FC<MyBookingsModalProps> = ({
           )}
         </div>
       </div>
+
+      {/* Custom Cancel Confirmation Modal */}
+      {bookingToCancel && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-md rounded-2xl bg-[#111724] border border-slate-700 shadow-2xl p-6 text-slate-100">
+            <div className="flex items-center gap-2.5 mb-3">
+              <AlertTriangle className="w-5 h-5 text-amber-400" />
+              <h4 className="text-base font-bold text-white">Cancel Booking</h4>
+            </div>
+            <p className="text-xs text-slate-300 mb-4 leading-relaxed">
+              Are you sure you want to cancel your seat for{' '}
+              <strong className="text-white">&quot;{bookingToCancel.event_title}&quot;</strong>?
+              This will free the seat for other attendees and cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2.5">
+              <button
+                onClick={() => setBookingToCancel(null)}
+                className="px-4 py-2 text-xs font-medium rounded-lg text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 transition"
+              >
+                Keep My Seat
+              </button>
+              <button
+                onClick={confirmCancel}
+                className="px-4 py-2 text-xs font-semibold rounded-lg bg-rose-600 hover:bg-rose-500 text-white transition"
+              >
+                Yes, Cancel Booking
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -56,6 +56,14 @@ export const Navbar: React.FC<NavbarProps> = ({
 
               {/* User Dropdown / Profile pill */}
               <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
+                {/* Avatar with initial — always visible */}
+                <div
+                  className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0 select-none"
+                  title={user.name}
+                >
+                  {user.name?.charAt(0).toUpperCase()}
+                </div>
+                {/* Name + role — only on sm+ */}
                 <div className="hidden sm:flex flex-col text-right">
                   <span className="text-xs font-semibold text-slate-200 leading-none">
                     {user.name}
