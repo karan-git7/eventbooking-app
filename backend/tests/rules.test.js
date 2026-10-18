@@ -17,14 +17,14 @@ describe('EventBook - Business Rules & Integrity Tests', () => {
     // Login as seeded Admin
     const adminLogin = await request(app)
       .post('/api/auth/login')
-      .send({ email: 'admin@eventbook.com', password: 'AdminPass123!' });
+      .send({ email: 'admin@gmail.com', password: 'admin@123' });
     expect(adminLogin.status).toBe(200);
     adminToken = adminLogin.body.token;
 
-    // Login as seeded User 1 (Alex)
+    // Login as seeded User 1 (Karan)
     const user1Login = await request(app)
       .post('/api/auth/login')
-      .send({ email: 'user@eventbook.com', password: 'UserPass123!' });
+      .send({ email: 'karan@gmail.com', password: 'karan@123' });
     expect(user1Login.status).toBe(200);
     user1Token = user1Login.body.token;
     user1Id = user1Login.body.user.id;
@@ -32,7 +32,7 @@ describe('EventBook - Business Rules & Integrity Tests', () => {
     // Login as seeded User 2 (Jane)
     const user2Login = await request(app)
       .post('/api/auth/login')
-      .send({ email: 'jane@eventbook.com', password: 'UserPass123!' });
+      .send({ email: 'jane@gmail.com', password: 'karan@123' });
     expect(user2Login.status).toBe(200);
     user2Token = user2Login.body.token;
     user2Id = user2Login.body.user.id;

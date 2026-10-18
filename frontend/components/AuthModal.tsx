@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { X, Lock, Mail, User as UserIcon, AlertCircle, Sparkles, CheckCircle2 } from 'lucide-react';
+import { X, Lock, Mail, User as UserIcon, AlertCircle } from 'lucide-react';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -15,7 +15,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onClose,
   initialTab = 'login',
 }) => {
-  const { login, register, loginAsDemoAdmin, loginAsDemoUser } = useAuth();
+  const { login, register } = useAuth();
   const [tab, setTab] = useState<'login' | 'register'>(initialTab);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -44,26 +44,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  const handleDemo = async (role: 'admin' | 'user') => {
-    setError(null);
-    setLoading(true);
-    try {
-      if (role === 'admin') {
-        await loginAsDemoAdmin();
-      } else {
-        await loginAsDemoUser();
-      }
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
       onClose();
-    } catch (err: any) {
-      setError(err.message || 'Demo login failed.');
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md rounded-2xl bg-[#101726] border border-slate-800 shadow-2xl overflow-hidden">
+    <div
+      onClick={handleBackdropClick}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200"
+    >
+      <div className="relative w-full max-w-md rounded-2xl bg-[#111622] border border-slate-800 shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-slate-800/80 bg-slate-900/50">
           <div className="flex items-center gap-2">
@@ -71,7 +63,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <Lock className="w-4 h-4" />
             </div>
             <h3 className="text-base font-semibold text-white">
-              {tab === 'login' ? 'Welcome Back' : 'Create an Account'}
+              {tab === 'login' ? 'Sign In to EventBook' : 'Create an Account'}
             </h3>
           </div>
           <button
@@ -107,33 +99,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         </div>
 
         <div className="p-6">
-          {/* Quick Demo Access Bar */}
-          <div className="mb-6 p-3 rounded-xl bg-slate-900/80 border border-slate-800/80">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-amber-400" /> Quick reviewer accounts
-              </span>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleDemo('user')}
-                disabled={loading}
-                className="py-1.5 px-3 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
-              >
-                Alex (Normal User)
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemo('admin')}
-                disabled={loading}
-                className="py-1.5 px-3 text-xs font-medium rounded-lg bg-purple-950/40 hover:bg-purple-900/50 text-purple-300 border border-purple-500/30 transition"
-              >
-                Admin (Manager)
-              </button>
-            </div>
-          </div>
-
           {/* Error Message Alert */}
           {error && (
             <div className="mb-4 p-3 rounded-xl bg-rose-950/40 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2">
@@ -156,7 +121,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Sarah Connor"
+                    placeholder="e.g. Karan Gupta"
                     className="w-full pl-9 pr-3 py-2 text-sm bg-slate-900 border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition"
                   />
                 </div>
@@ -200,13 +165,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-medium text-sm shadow-lg shadow-indigo-500/20 transition disabled:opacity-60 disabled:cursor-not-allowed mt-2"
+              className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm shadow-sm transition disabled:opacity-60 disabled:cursor-not-allowed mt-2"
             >
               {loading
                 ? 'Processing...'
                 : tab === 'login'
-                ? 'Sign In to Account'
-                : 'Create User Account'}
+                ? 'Sign In'
+                : 'Create Account'}
             </button>
           </form>
         </div>

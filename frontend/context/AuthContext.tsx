@@ -74,11 +74,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const loginAsDemoAdmin = async () => {
-    await login('admin@eventbook.com', 'AdminPass123!');
+    await login('admin@gmail.com', 'admin@123');
   };
 
   const loginAsDemoUser = async () => {
-    await login('user@eventbook.com', 'UserPass123!');
+    await login('karan@gmail.com', 'karan@123');
   };
 
   return (

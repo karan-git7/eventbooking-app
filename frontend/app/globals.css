@@ -1,13 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --bg-primary: #090d16;
-  --bg-surface: #101726;
-  --bg-card: #141c2e;
-  --border-subtle: #23304a;
-  --accent-purple: #7952f5;
-  --accent-blue: #3b82f6;
-  --accent-emerald: #10b981;
+  --bg-primary: #0b0f17;
+  --bg-surface: #111724;
+  --bg-card: #151d2d;
+  --border-color: #1e293b;
 }
 
 body {
@@ -17,45 +14,35 @@ body {
   min-height: 100vh;
 }
 
-/* Glassmorphism effects */
-.glass-panel {
-  background: rgba(16, 23, 38, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+/* Crisp Clean Card Styles */
+.event-card {
+  background-color: #121826;
+  border: 1px solid #1e293b;
+  transition: border-color 0.15s ease, transform 0.15s ease;
 }
 
-.glass-card {
-  background: rgba(20, 28, 46, 0.85);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+.event-card:hover {
+  border-color: #3b82f6;
+  transform: translateY(-1px);
 }
 
-.glass-card:hover {
-  border-color: rgba(99, 102, 241, 0.4);
-  transform: translateY(-2px);
-  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5), 0 0 20px -5px rgba(99, 102, 241, 0.15);
-}
-
-/* Subtle glow badges */
+/* Status Badges */
 .badge-emerald {
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(16, 185, 129, 0.1);
   color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 .badge-amber {
-  background: rgba(245, 158, 11, 0.12);
+  background: rgba(245, 158, 11, 0.1);
   color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.25);
+  border: 1px solid rgba(245, 158, 11, 0.2);
 }
 
 .badge-rose {
-  background: rgba(239, 68, 68, 0.12);
+  background: rgba(239, 68, 68, 0.1);
   color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .badge-slate {
@@ -66,15 +53,15 @@ body {
 
 /* Custom scrollbars */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #090d16;
+  background: #0b0f17;
 }
 ::-webkit-scrollbar-thumb {
   background: #1e293b;
-  border-radius: 4px;
+  border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #334155;

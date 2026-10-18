@@ -10,19 +10,15 @@ import { EventDetailModal } from '../components/EventDetailModal';
 import { AuthModal } from '../components/AuthModal';
 import { MyBookingsModal } from '../components/MyBookingsModal';
 import { AdminModal } from '../components/AdminModal';
+import { ReviewerGuideModal } from '../components/ReviewerGuideModal';
 import {
   Search,
   Calendar,
-  Sparkles,
-  ArrowRight,
   ChevronLeft,
   ChevronRight,
-  Filter,
   CheckCircle2,
   AlertCircle,
   Ticket,
-  ShieldCheck,
-  Zap,
 } from 'lucide-react';
 
 export default function Home() {
@@ -47,7 +43,7 @@ export default function Home() {
   const [filter, setFilter] = useState<'upcoming' | 'all' | 'past'>('upcoming');
   const [currentPage, setCurrentPage] = useState(1);
 
-  // User's confirmed bookings map for instant badges { [eventId]: true }
+  // User confirmed bookings map
   const [myBookedEvents, setMyBookedEvents] = useState<Record<string, boolean>>({});
 
   // Modals
@@ -61,7 +57,10 @@ export default function Home() {
   const [myBookingsOpen, setMyBookingsOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
 
-  // Booking action state
+  // Reviewer Guide Popup (shows on every refresh, can be dismissed by clicking anywhere)
+  const [reviewerModalOpen, setReviewerModalOpen] = useState(true);
+
+  // Action toast
   const [bookingLoadingId, setBookingLoadingId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -69,12 +68,12 @@ export default function Home() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery);
-      setCurrentPage(1); // reset to page 1 on new search
-    }, 350);
+      setCurrentPage(1);
+    }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Load user bookings to show "Booked" pill
+  // Load user bookings
   const loadUserBookings = useCallback(async () => {
     if (!user) {
       setMyBookedEvents({});
@@ -98,7 +97,7 @@ export default function Home() {
     loadUserBookings();
   }, [loadUserBookings]);
 
-  // Fetch Events from API (Server-side paginated and searched)
+  // Fetch Events from API
   const fetchEvents = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -112,7 +111,7 @@ export default function Home() {
       setEvents(res.events);
       setPagination(res.pagination);
     } catch (err: any) {
-      setError(err.message || 'Unable to connect to EventBook backend service.');
+      setError(err.message || 'Unable to connect to EventBook service.');
     } finally {
       setLoading(false);
     }
@@ -122,7 +121,7 @@ export default function Home() {
     fetchEvents();
   }, [fetchEvents]);
 
-  // Handle Booking Seat directly
+  // Handle Booking
   const handleBook = async (event: EventItem) => {
     if (!user) {
       setAuthInitialTab('login');
@@ -133,8 +132,7 @@ export default function Home() {
     setBookingLoadingId(event.id);
     try {
       const res = await api.bookings.book(event.id);
-      showToast('success', res.message || 'Seat booked successfully!');
-      // Refresh events and user bookings
+      showToast('success', res.message || 'Seat reserved successfully.');
       await Promise.all([fetchEvents(), loadUserBookings()]);
       if (selectedEvent && selectedEvent.id === event.id) {
         setSelectedUserBooking(res.booking);
@@ -147,7 +145,7 @@ export default function Home() {
     }
   };
 
-  // Handle Cancel Booking from detail modal
+  // Handle Cancel Booking
   const handleCancelBooking = async (bookingId: string) => {
     try {
       const res = await api.bookings.cancel(bookingId);
@@ -171,7 +169,7 @@ export default function Home() {
       setSelectedEvent(detail.event);
       setSelectedUserBooking(detail.user_booking);
     } catch (e) {
-      // fallback to card event
+      // fallback
     }
   };
 
@@ -179,11 +177,11 @@ export default function Home() {
     setToastMessage({ type, text });
     setTimeout(() => {
       setToastMessage(null);
-    }, 4500);
+    }, 4000);
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#090d16] text-slate-100">
+    <div className="min-h-screen flex flex-col bg-[#0b0f17] text-slate-100">
       {/* Navigation */}
       <Navbar
         onOpenAuth={(tab = 'login') => {
@@ -198,95 +196,72 @@ export default function Home() {
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5 duration-300">
           <div
-            className={`px-4 py-3 rounded-2xl shadow-2xl border flex items-center gap-3 text-sm backdrop-blur-md ${
+            className={`px-4 py-2.5 rounded-xl shadow-xl border flex items-center gap-2.5 text-xs font-medium ${
               toastMessage.type === 'success'
-                ? 'bg-emerald-950/80 border-emerald-500/40 text-emerald-200'
-                : 'bg-rose-950/80 border-rose-500/40 text-rose-200'
+                ? 'bg-emerald-950/90 border-emerald-500/40 text-emerald-200'
+                : 'bg-rose-950/90 border-rose-500/40 text-rose-200'
             }`}
           >
             {toastMessage.type === 'success' ? (
-              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
             ) : (
-              <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
             )}
-            <span className="font-medium">{toastMessage.text}</span>
+            <span>{toastMessage.text}</span>
           </div>
         </div>
       )}
 
-      {/* Reviewer / Evaluator Notice Banner */}
-      <div className="bg-gradient-to-r from-indigo-950/60 via-purple-950/60 to-slate-900 border-b border-indigo-500/20 py-2.5 px-4 text-xs text-slate-300">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span className="font-semibold text-white">Full-Stack Intern Project:</span>
-            <span>All 6 backend business rules + tests + concurrency locks are active.</span>
-          </div>
-          <div className="flex items-center gap-3 text-[11px] font-mono text-slate-400">
-            <span>Admin: <strong className="text-purple-300 font-sans">admin@eventbook.com</strong></span>
-            <span>User: <strong className="text-indigo-300 font-sans">user@eventbook.com</strong></span>
-            <span className="text-slate-500 hidden sm:inline">Pass: UserPass123! / AdminPass123!</span>
-          </div>
-        </div>
-      </div>
-
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        {/* Hero Section */}
-        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold mb-4">
-            <Zap className="w-3.5 h-3.5" />
-            Atomic Concurrency & Real-Time Seating
-          </div>
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-4 leading-tight">
-            Curated Tech Events, <br />
-            <span className="bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 bg-clip-text text-transparent">
-              Zero Overbooking Guarantee
-            </span>
+        {/* Simple & Clean Product Hero Section */}
+        <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-3">
+            Discover & Book Tech Events
           </h1>
-          <p className="text-sm sm:text-base text-slate-400 leading-relaxed max-w-2xl mx-auto">
-            Browse upcoming workshops, summits, and intimate acoustics sessions. Real-time dynamic seats calculation backed by PostgreSQL row-level locks.
+          <p className="text-sm text-slate-400 leading-relaxed">
+            Browse upcoming workshops, conferences, and meetups. Reserve your seat instantly with live capacity updates.
           </p>
         </div>
 
-        {/* Search & Filter Bar */}
-        <div className="glass-panel rounded-2xl p-4 sm:p-5 mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
+        {/* Clean Search & Filter Controls */}
+        <div className="bg-[#111724] border border-slate-800 rounded-xl p-3 sm:p-4 mb-8 flex flex-col sm:flex-row items-center justify-between gap-3">
           {/* Search Input */}
-          <div className="relative w-full md:w-96">
-            <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
+          <div className="relative w-full sm:w-80">
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search events by title..."
-              className="w-full pl-10 pr-4 py-2 text-sm bg-slate-900/90 border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition"
+              className="w-full pl-9 pr-8 py-1.5 text-xs sm:text-sm bg-[#0b0f17] border border-slate-800 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-2.5 text-xs text-slate-500 hover:text-white"
+                className="absolute right-2.5 top-2 text-xs text-slate-500 hover:text-white"
               >
-                Clear
+                ✕
               </button>
             )}
           </div>
 
-          {/* Filter Pills */}
-          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800/80 w-full md:w-auto overflow-x-auto">
+          {/* Filter Tabs */}
+          <div className="flex items-center gap-1 bg-[#0b0f17] border border-slate-800/80 p-1 rounded-lg w-full sm:w-auto">
             <button
               onClick={() => { setFilter('upcoming'); setCurrentPage(1); }}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap ${
+              className={`flex-1 sm:flex-none px-3 py-1.5 rounded-md text-xs font-medium transition ${
                 filter === 'upcoming'
-                  ? 'bg-indigo-600 text-white shadow-sm'
+                  ? 'bg-indigo-600 text-white'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              Upcoming Events
+              Upcoming
             </button>
             <button
               onClick={() => { setFilter('all'); setCurrentPage(1); }}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap ${
+              className={`flex-1 sm:flex-none px-3 py-1.5 rounded-md text-xs font-medium transition ${
                 filter === 'all'
-                  ? 'bg-indigo-600 text-white shadow-sm'
+                  ? 'bg-indigo-600 text-white'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -294,9 +269,9 @@ export default function Home() {
             </button>
             <button
               onClick={() => { setFilter('past'); setCurrentPage(1); }}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap ${
+              className={`flex-1 sm:flex-none px-3 py-1.5 rounded-md text-xs font-medium transition ${
                 filter === 'past'
-                  ? 'bg-indigo-600 text-white shadow-sm'
+                  ? 'bg-indigo-600 text-white'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -307,51 +282,49 @@ export default function Home() {
 
         {/* Events Grid */}
         {error ? (
-          <div className="p-8 rounded-3xl bg-rose-950/20 border border-rose-500/30 text-center text-rose-300">
+          <div className="p-8 rounded-xl bg-rose-950/20 border border-rose-500/30 text-center text-rose-300">
             <AlertCircle className="w-8 h-8 text-rose-400 mx-auto mb-2" />
-            <h3 className="text-base font-bold">Failed to load events</h3>
+            <h3 className="text-sm font-semibold">Failed to load events</h3>
             <p className="text-xs text-rose-400/80 mt-1">{error}</p>
             <button
               onClick={fetchEvents}
-              className="mt-4 px-4 py-2 text-xs font-semibold rounded-xl bg-slate-800 hover:bg-slate-700 text-white transition"
+              className="mt-3 px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-white transition"
             >
-              Retry Connection
+              Retry
             </button>
           </div>
         ) : loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {[1, 2, 3, 4, 5, 6].map((n) => (
               <div
                 key={n}
-                className="rounded-2xl p-5 bg-slate-900/60 border border-slate-800/80 animate-pulse space-y-4"
+                className="rounded-xl p-5 bg-[#121826] border border-slate-800 animate-pulse space-y-3"
               >
                 <div className="flex justify-between">
-                  <div className="w-20 h-5 bg-slate-800 rounded-md" />
-                  <div className="w-24 h-5 bg-slate-800 rounded-full" />
+                  <div className="w-16 h-4 bg-slate-800 rounded" />
+                  <div className="w-20 h-4 bg-slate-800 rounded-full" />
                 </div>
-                <div className="w-3/4 h-6 bg-slate-800 rounded-md" />
-                <div className="w-full h-12 bg-slate-800/60 rounded-md" />
-                <div className="space-y-2 pt-2">
-                  <div className="w-1/2 h-4 bg-slate-800 rounded" />
-                  <div className="w-2/3 h-4 bg-slate-800 rounded" />
+                <div className="w-3/4 h-5 bg-slate-800 rounded" />
+                <div className="w-full h-10 bg-slate-800/60 rounded" />
+                <div className="space-y-1.5 pt-2">
+                  <div className="w-1/2 h-3.5 bg-slate-800 rounded" />
+                  <div className="w-2/3 h-3.5 bg-slate-800 rounded" />
                 </div>
               </div>
             ))}
           </div>
         ) : events.length === 0 ? (
-          <div className="py-20 text-center glass-panel rounded-3xl border border-slate-800 p-8">
-            <div className="w-14 h-14 rounded-2xl bg-slate-800/60 mx-auto mb-3 flex items-center justify-center text-slate-500">
-              <Calendar className="w-7 h-7" />
-            </div>
-            <h3 className="text-base font-bold text-white">No Events Found</h3>
-            <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+          <div className="py-16 text-center bg-[#111724] rounded-xl border border-slate-800 p-8">
+            <Calendar className="w-8 h-8 text-slate-500 mx-auto mb-2" />
+            <h3 className="text-sm font-semibold text-white">No Events Found</h3>
+            <p className="text-xs text-slate-400 mt-1">
               {debouncedSearch
-                ? `No events matching "${debouncedSearch}". Try another title query or filter.`
-                : 'There are no events registered under this filter.'}
+                ? `No events matching "${debouncedSearch}". Try another title.`
+                : 'There are currently no events under this filter.'}
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {events.map((ev) => (
               <EventCard
                 key={ev.id}
@@ -367,30 +340,29 @@ export default function Home() {
 
         {/* Server-Side Pagination Bar */}
         {pagination.totalPages > 1 && (
-          <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-slate-800/80">
+          <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-slate-800">
             <span className="text-xs text-slate-400">
-              Showing page <strong className="text-white">{pagination.page}</strong> of{' '}
-              <strong className="text-white">{pagination.totalPages}</strong> ({pagination.total} events)
+              Showing page <strong className="text-slate-200">{pagination.page}</strong> of{' '}
+              <strong className="text-slate-200">{pagination.totalPages}</strong> ({pagination.total} events)
             </span>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={!pagination.hasPrevPage || loading}
-                className="px-3.5 py-2 text-xs font-medium rounded-xl text-slate-300 hover:text-white bg-slate-900 border border-slate-800 hover:bg-slate-800 transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+                className="px-3 py-1.5 text-xs font-medium rounded-lg text-slate-300 hover:text-white bg-slate-900 border border-slate-800 hover:bg-slate-800 transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-3.5 h-3.5" />
                 <span>Previous</span>
               </button>
 
-              {/* Page numbers */}
               {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((num) => (
                 <button
                   key={num}
                   onClick={() => setCurrentPage(num)}
-                  className={`w-8 h-8 rounded-xl text-xs font-semibold transition ${
+                  className={`w-7 h-7 rounded-lg text-xs font-medium transition ${
                     currentPage === num
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                      ? 'bg-indigo-600 text-white'
                       : 'text-slate-400 hover:text-white bg-slate-900 border border-slate-800'
                   }`}
                 >
@@ -401,33 +373,41 @@ export default function Home() {
               <button
                 onClick={() => setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))}
                 disabled={!pagination.hasNextPage || loading}
-                className="px-3.5 py-2 text-xs font-medium rounded-xl text-slate-300 hover:text-white bg-slate-900 border border-slate-800 hover:bg-slate-800 transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+                className="px-3 py-1.5 text-xs font-medium rounded-lg text-slate-300 hover:text-white bg-slate-900 border border-slate-800 hover:bg-slate-800 transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
               >
                 <span>Next</span>
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-800/80 py-8 bg-[#090d16] text-xs text-slate-500">
+      {/* Production-Grade Footer */}
+      <footer className="border-t border-slate-800 py-8 bg-[#0b0f17] text-xs text-slate-500 mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Ticket className="w-4 h-4 text-indigo-400" />
-            <span className="font-semibold text-slate-300">EventBook Platform</span>
-            <span>• Full-Stack Take-Home Assessment</span>
+            <span className="font-semibold text-slate-300">EventBook</span>
+            <span>— Discover, book, and attend memorable events.</span>
           </div>
-          <div className="flex items-center gap-4 text-slate-400">
-            <span>Next.js 16</span>
-            <span>•</span>
-            <span>Express REST API</span>
-            <span>•</span>
-            <span>Supabase PostgreSQL</span>
+          <div className="flex items-center gap-5 text-slate-400">
+            <a href="#" className="hover:text-slate-200 transition">About</a>
+            <a href="#" className="hover:text-slate-200 transition">Events</a>
+            <a href="#" className="hover:text-slate-200 transition">Privacy Policy</a>
+            <a href="#" className="hover:text-slate-200 transition">Terms of Service</a>
           </div>
         </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 pt-4 border-t border-slate-900 text-center text-slate-600 text-[11px]">
+          © {new Date().getFullYear()} EventBook Inc. All rights reserved.
+        </div>
       </footer>
+
+      {/* Reviewer / Demo Accounts Popup (Appears on refresh, dismissed by clicking outside) */}
+      <ReviewerGuideModal
+        isOpen={reviewerModalOpen}
+        onClose={() => setReviewerModalOpen(false)}
+      />
 
       {/* Modals */}
       <AuthModal
