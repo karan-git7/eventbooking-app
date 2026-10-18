@@ -1,0 +1,17 @@
+{
+  "name": "eventbooking-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "EventBook - Mini Event Booking Full-Stack Application",
+  "scripts": {
+    "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"magenta,cyan\" \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "test": "npm test --prefix backend",
+    "seed": "npm run seed --prefix backend",
+    "migrate": "npm run migrate --prefix backend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.5"
+  }
+}
